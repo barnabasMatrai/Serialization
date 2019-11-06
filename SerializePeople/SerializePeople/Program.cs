@@ -13,7 +13,7 @@ namespace SerializePeople
         static void Main(string[] args)
         {
             Person person = new Person("Maria", new DateTime(1998, 01, 01), "FEMALE");
-            Console.WriteLine(person);
+            person.Serialize("something");
             Console.ReadKey();
         }
     }
