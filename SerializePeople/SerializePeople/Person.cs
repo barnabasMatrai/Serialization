@@ -10,10 +10,11 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace SerializePeople
 {
     [Serializable]
-    public class Person
+    public class Person : IDeserializationCallback
     {
         private string name;
         private DateTime birthDate;
+        [NonSerialized]
         private int age;
         private Gender gender;
 
@@ -54,6 +55,11 @@ namespace SerializePeople
             Person person = (Person)formatter.Deserialize(stream);
             
             return person;
+        }
+
+        public void OnDeserialization(object sender)
+        {
+            age = DateTime.Today.Year - birthDate.Year;
         }
     }
 }
