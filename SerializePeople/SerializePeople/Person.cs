@@ -6,17 +6,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Permissions;
 
 namespace SerializePeople
 {
     [Serializable]
-    public class Person : IDeserializationCallback
+    public class Person : IDeserializationCallback, ISerializable
     {
         private string name;
         private DateTime birthDate;
         [NonSerialized]
         private int age;
         private Gender gender;
+
+        public Person()
+        {
+            name = "";
+            birthDate = new DateTime();
+            gender = Gender.MALE;
+        }
 
         public Person(string name, DateTime birthDate, string gender)
         {
@@ -35,24 +43,34 @@ namespace SerializePeople
             }
         }
 
+        public Person(SerializationInfo info, StreamingContext context)
+        {
+            name = (string)info.GetValue("name", typeof(string));
+            birthDate = (DateTime)info.GetValue("birthDate", typeof(DateTime));
+            gender = (Gender)info.GetValue("gender", typeof(Gender));
+        }
+
         public override string ToString()
         {
             return "Name: " + name + " BirthDate: " + birthDate.Year + " Age: " + age + " Gender: " + gender;
         }
 
-        public void Serialize(string output)
+        public Stream Serialize(string filePath)
         {
             IFormatter formatter = new BinaryFormatter();
-            Stream stream = new FileStream("C:/data.txt", FileMode.Create, FileAccess.Write);
+            Stream stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
             formatter.Serialize(stream, this);
             stream.Close();
+
+            return stream;
         }
 
-        public static Person Deserialize()
+        public static Person Deserialize(string filePath)
         {
             IFormatter formatter = new BinaryFormatter();
-            Stream stream = new FileStream("C:/data.txt", FileMode.Open, FileAccess.Read);
+            Stream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             Person person = (Person)formatter.Deserialize(stream);
+            stream.Close();
             
             return person;
         }
@@ -60,6 +78,14 @@ namespace SerializePeople
         public void OnDeserialization(object sender)
         {
             age = DateTime.Today.Year - birthDate.Year;
+        }
+
+        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("name", name);
+            info.AddValue("birthDate", birthDate);
+            info.AddValue("gender", gender);
         }
     }
 }
